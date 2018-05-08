@@ -16,8 +16,8 @@ connection.connect(function(err) {
     if (err) {
         console.error('error connecting: ' + err.stack);
     }
+    console.log("Welcome to Bamazon!");
     loadProducts();
-    // connection.end();
 });
 
 function loadProducts() {
@@ -32,14 +32,12 @@ function loadProducts() {
 }
 
 function promptCustomerForItem(inventory) {
-    // ADD CHECK FOR WHETHER THEY WANT TO BUY AN ITEM AT ALL -- IF NO, END CONNECTION
     inquirer.prompt([{
         type: 'input',
         name: 'choice',
         message: 'What is the ID of the item you would like to purchase?',
     }]).then(function(val) {
         let choiceId = parseInt(val.choice);
-        // query products to see if have enough
         let product = checkInventory(choiceId, inventory);
         if (product) {
             promptCustomerForQuantity(product);
@@ -73,7 +71,7 @@ function makePurchase(product, quantity) {
     var query = 'UPDATE products SET ? WHERE ?';
     connection.query(query,
         [{stock_quantity: product.stock_quantity - quantity}, 
-        {id: product.item_id}],
+        {id: product.id}],
         function(err, res) {
             if (err) throw err;
             var totalCost = parseInt(product.product_price) * quantity;
