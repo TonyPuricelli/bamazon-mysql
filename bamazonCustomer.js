@@ -76,8 +76,8 @@ function makePurchase(product, quantity) {
         {id: product.item_id}],
         function(err, res) {
             if (err) throw err;
-            console.log("Your order has been placed!");
-            // loadProducts();
+            var totalCost = parseInt(product.product_price) * quantity;
+            console.log("Your order for " + quantity + " " + product.product_name + " has been placed! \nYour order cost $" + totalCost);
             keepShopping();
         }
     )
