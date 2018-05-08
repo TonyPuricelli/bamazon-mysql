@@ -17,11 +17,11 @@ connection.connect(function(err) {
         console.error('error connecting: ' + err.stack);
     }
     loadProducts();
-    connection.end();
+    // connection.end();
 });
 
 function loadProducts() {
-    let query = 'SELECT * FROM products';
+    var query = 'SELECT * FROM products';
     connection.query(query, function(err, res) {
         // show the products
         console.table(res);
@@ -32,6 +32,7 @@ function loadProducts() {
 }
 
 function promptCustomerForItem(inventory) {
+    // ADD CHECK FOR WHETHER THEY WANT TO BUY AN ITEM AT ALL -- IF NO, END CONNECTION
     inquirer.prompt([{
         type: 'input',
         name: 'choice',
@@ -53,14 +54,14 @@ function promptCustomerForQuantity(product) {
     inquirer.prompt([{
         type: 'input',
         name: 'quantity',
-        message: 'How many would you like to purchase?',
+        message: 'How many ' + product.product_name + ' would you like to purchase?',
     }]).then(function(val) {
         let quantity = parseInt(val.quantity);
         if (isNaN(quantity)) {
-            console.log("Not a valid number");
+            console.log("Not a valid number. Please try again.");
             loadProducts();
         } else if (quantity > product.stock_quantity) {
-            console.log('not enough');
+            console.log('Not enough of that item is in stock. Please try again.');
             loadProducts();
         } else {
             makePurchase(product, quantity);
@@ -69,21 +70,40 @@ function promptCustomerForQuantity(product) {
 }
 
 function makePurchase(product, quantity) {
-    connection.query(
-        'UPDATE products SET stock_quantity = stock_quantity - ? WHERE item_id = ?',
-        [quantity, product.item_id],
+    var query = 'UPDATE products SET ? WHERE ?';
+    connection.query(query,
+        [{stock_quantity: product.stock_quantity - quantity}, 
+        {id: product.item_id}],
         function(err, res) {
-            console.log(success);
-            loadProduct();
+            if (err) throw err;
+            console.log("Your order has been placed!");
+            // loadProducts();
+            keepShopping();
         }
     )
 }
 
 function checkInventory(choiceId, inventory) {
     for(var i=0; i < inventory.length; i++) {
-        if (inventory[i].item_id === choiceId) {
+        if (inventory[i].id === choiceId) {
             return inventory[i];
         }
     }
     return null;
 }
+
+function keepShopping(){
+    inquirer.prompt([{
+        type: 'confirm',
+        name: 'checkout',
+        message: 'Would you like to keep shopping?',
+    }]).then(function(val) {
+        let stillShopping = val.checkout;
+        if (stillShopping) {
+            loadProducts();
+        } else {
+            console.log('Thank you for shopping at Bamazon. Have a nice day.');
+            connection.end();
+        }
+    });
+};
